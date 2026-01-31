@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Websocket Broadcast Tunnel</title>
+    <style>
+        body{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: sans-serif;
+        }
+
+        .status-off {
+            color: red; 
+        }
+
+        .status-on {
+            color: green
+        }
+
+        #log {
+            width: 80%;
+            height: 60vh;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            padding: 10px;
+            overflow-y: scroll;
+        }
+    </style>
+</head>
+<body>
+    <h1>Websocket Broadcast Console</h1>
+    <p id="status" class="status-off"> Connecting...</p>
+    <form id="messageForm">
+        <input type="text" placeholder="Send Cargo..." id="messageInput" autocomplete="off"/>
+        <button>Deploy Message</button>
+    </form>
+    <pre id="log"></pre>
+</body>
+<script>
+
+    const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+    const messageInput = document.getElementById('messageInput');
+    const messageForm = document.getElementById('messageForm');
+    
+    const ws = new WebSocket(`ws://localhost:8080`);
+
+    function changeStatus(label, className) {
+        statusEl.textContent = label;
+        statusEl.className = className;
+    }
+
+    function prependLog(label,message) {
+        const entry = `${new Date().toLocaleTimeString()} ${label}: ${message} \n`;
+        logEl.textContent = entry + logEl.textContent;
+    }
+
+    ws.addEventListener("open", () => {
+        changeStatus(`CONNECTED: ws://localhost:8080`, 'status-on');
+        prependLog('SYSTEM', 'WebSocket connection established.');
+    })
+
+
+    ws.addEventListener("error", (error) => {
+        changeStatus(`ERROR`, 'status-off');
+        prependLog('SYSTEM', `WebSocket error: ${error.message}`);
+    });
+
+    ws.addEventListener('close', () => {
+        changeStatus(`DISCONNECTED`, 'status-off');
+        prependLog('SYSTEM', 'WebSocket connection closed.');
+    });
+
+    ws.addEventListener("message", (event) => {
+        prependLog('RECEIVED', event.data);
+    });
+
+    messageForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if(ws.readyState !== WebSocket.OPEN) {
+            alert('WebSocket is not connected.');
+            return;
+        }
+        const message = messageInput.value;
+        if(message.trim() === '') return;
+        ws.send(message);
+        prependLog('SENT', message);
+        messageInput.value = '';
+    });
+
+</script>
+</html>
