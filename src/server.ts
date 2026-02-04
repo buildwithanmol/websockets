@@ -21,9 +21,10 @@ app.use(express.json());
 app.use('/matches', matchesRouter);
 app.use('/matches/:id/commentary', commentaryRouter);
 
-const {broadcastMatchCreated} = attachWebsocketServer(server);
+const {broadcastMatchCreated, broadcastCommentary} = attachWebsocketServer(server);
 
 app.locals.broadcastMatchCreated = broadcastMatchCreated;
+app.locals.broadcastCommentary = broadcastCommentary;
 
 server.listen(PORT, HOST, () => {
     const baseUrl = HOST === "0.0.0.0" ? `http://localhost:${PORT}` : `http://${HOST}:${PORT}`;

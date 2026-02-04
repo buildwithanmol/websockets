@@ -37,7 +37,7 @@ commentaryRouter.get("/", async (req, res) => {
       .limit(limit);
 
     res.status(200).json({ data });
-  } catch (error) {
+  } catch (error) {  
     res.status(500).json({
       error: "Failed to list commentary",
       details: JSON.stringify(error),
@@ -65,7 +65,7 @@ commentaryRouter.post("/", async (req, res) => {
   }
 
   try {
-    const [result] = await db
+    const [event] = await db
       .insert(commentary)
       .values({
         matchId: parsedParams.data.id,
@@ -74,7 +74,11 @@ commentaryRouter.post("/", async (req, res) => {
       })
       .returning();
 
-    res.status(201).json({ data: result });
+    if(res.app.locals.broadcastCommentary) {
+        res.app.locals.broadcastCommentary(parsedParams.data.id, event);
+    }
+
+    res.status(201).json({ data: event });
   } catch (error) {
     res.status(500).json({
       error: "Failed to create commentary",
